@@ -144,22 +144,58 @@
     });
   }
 
-  /* -------- Contact form (front-end only) -------- */
+  /* -------- Contact form (opens a prefilled text to the coach) -------- */
+  var SMS_NUMBER = "+18582547160";
+
+  function smsHref(body) {
+    // iOS wants "&body=", everything else "?body=".
+    var ua = navigator.userAgent || "";
+    var isApple = /iPhone|iPad|iPod/.test(ua);
+    return "sms:" + SMS_NUMBER + (isApple ? "&" : "?") + "body=" + encodeURIComponent(body);
+  }
+
+  function buildMessage(f) {
+    function val(n) {
+      var el = f.querySelector("[name=" + n + "]");
+      return el && el.value ? el.value.trim() : "";
+    }
+    var lines = ["Hi HiLevel — I'd like to book my free consultation."];
+    if (val("name")) lines.push("Name: " + val("name"));
+    if (val("email")) lines.push("Email: " + val("email"));
+    if (val("phone")) lines.push("Phone: " + val("phone"));
+    if (val("goal")) lines.push("Goal: " + val("goal"));
+    if (val("message")) lines.push("More: " + val("message"));
+    return lines.join("\n");
+  }
+
+  var direct = document.querySelector("#sms-direct");
+  if (direct) {
+    direct.setAttribute("href", smsHref("Hi HiLevel \u2014 I'd like to book my free consultation."));
+  }
+
   var form = document.querySelector("#consult-form");
   if (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
+
+      var href = smsHref(buildMessage(form));
       var success = document.querySelector("#form-success");
       var nameField = form.querySelector("[name=name]");
       var first = nameField && nameField.value ? nameField.value.trim().split(" ")[0] : "";
+
       form.style.display = "none";
       if (success) {
         var h = success.querySelector("h3");
         if (h && first) h.textContent = "Thanks, " + first + ".";
+        var link = success.querySelector("#sms-fallback");
+        if (link) link.setAttribute("href", href);
         success.classList.add("show");
         success.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
       }
+
+      // Hand off to the messaging app with everything already typed out.
+      window.location.href = href;
     });
   }
 

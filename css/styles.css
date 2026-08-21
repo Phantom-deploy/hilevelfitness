@@ -727,6 +727,7 @@ h2.title {
 }
 .form-success h3 { font-size: 1.5rem; margin-bottom: 10px; }
 .form-success p { color: var(--text-2); margin: 0; }
+.form-success #sms-fallback { margin-top: 22px; max-width: 320px; margin-inline: auto; }
 
 /* ---------- Services: accordion ---------- */
 .accordion { display: grid; gap: 14px; }
