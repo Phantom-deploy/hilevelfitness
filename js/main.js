@@ -144,8 +144,9 @@
     });
   }
 
-  /* -------- Contact form (opens a prefilled text to the coach) -------- */
+  /* -------- Contact form (hands off to text or email, prefilled) -------- */
   var SMS_NUMBER = "+18582547160";
+  var MAIL_TO = "bradyhiel@gmail.com";
 
   function smsHref(body) {
     // iOS wants "&body=", everything else "?body=".
@@ -168,10 +169,19 @@
     return lines.join("\n");
   }
 
-  var direct = document.querySelector("#sms-direct");
-  if (direct) {
-    direct.setAttribute("href", smsHref("Hi HiLevel \u2014 I'd like to book my free consultation."));
+  function mailtoHref(body) {
+    return "mailto:" + MAIL_TO +
+      "?subject=" + encodeURIComponent("Free consultation request") +
+      "&body=" + encodeURIComponent(body);
   }
+
+  var INTRO = "Hi HiLevel \u2014 I'd like to book my free consultation.";
+
+  var smsDirect = document.querySelector("#sms-direct");
+  if (smsDirect) smsDirect.setAttribute("href", smsHref(INTRO));
+
+  var mailDirect = document.querySelector("#mail-direct");
+  if (mailDirect) mailDirect.setAttribute("href", mailtoHref(INTRO));
 
   var form = document.querySelector("#consult-form");
   if (form) {
@@ -179,23 +189,23 @@
       e.preventDefault();
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
-      var href = smsHref(buildMessage(form));
+      var body = buildMessage(form);
       var success = document.querySelector("#form-success");
       var nameField = form.querySelector("[name=name]");
       var first = nameField && nameField.value ? nameField.value.trim().split(" ")[0] : "";
+      if (first) first = first.charAt(0).toUpperCase() + first.slice(1);
 
       form.style.display = "none";
       if (success) {
         var h = success.querySelector("h3");
         if (h && first) h.textContent = "Thanks, " + first + ".";
-        var link = success.querySelector("#sms-fallback");
-        if (link) link.setAttribute("href", href);
+        var smsLink = success.querySelector("#sms-fallback");
+        if (smsLink) smsLink.setAttribute("href", smsHref(body));
+        var mailLink = success.querySelector("#mail-fallback");
+        if (mailLink) mailLink.setAttribute("href", mailtoHref(body));
         success.classList.add("show");
         success.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
       }
-
-      // Hand off to the messaging app with everything already typed out.
-      window.location.href = href;
     });
   }
 
