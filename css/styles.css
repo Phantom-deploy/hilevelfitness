@@ -740,17 +740,65 @@ h2.title {
 }
 .form-success .success-note { margin-top: 18px; font-size: 0.82rem; }
 
-/* Email copy panel */
-.mail-panel {
-  max-width: 380px;
-  margin: 22px auto 0;
+/* ---------- Email modal ---------- */
+.modal[hidden] { display: none; }
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
   display: grid;
-  gap: 16px;
-  text-align: left;
-  animation: fadeUp 0.4s var(--ease) both;
+  place-items: center;
+  padding: 24px;
 }
-.mail-panel[hidden] { display: none; }
-.copy-row { display: grid; gap: 7px; }
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: modalFade 0.28s var(--ease) both;
+}
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 34px 32px 30px;
+  background: linear-gradient(180deg, #141418 0%, var(--bg-1) 100%);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: modalIn 0.34s var(--ease) both;
+}
+.modal-card h3 { font-size: 1.45rem; margin: 10px 0 8px; }
+.modal-lead { color: var(--text-2); font-size: 14.5px; line-height: 1.6; margin: 0 0 24px; }
+.modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease);
+}
+.modal-close:hover { background: rgba(255, 255, 255, 0.12); color: var(--text); }
+
+@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop, .modal-card { animation: none; }
+}
+
+/* Copy boxes */
+.copy-row { display: grid; gap: 8px; margin-bottom: 18px; }
 .copy-label {
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -761,10 +809,10 @@ h2.title {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 10px 10px 14px;
+  padding: 11px 11px 11px 15px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: var(--r-md, 12px);
+  border-radius: var(--r-md);
 }
 .copy-box-block { align-items: flex-start; }
 .copy-value {
@@ -773,23 +821,26 @@ h2.title {
   margin: 0;
   font-family: inherit;
   font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text-1);
+  line-height: 1.65;
+  color: var(--text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-height: 168px;
+  max-height: 190px;
   overflow-y: auto;
+  -webkit-user-select: text;
+  user-select: text;
 }
 .copy-btn {
   flex: none;
-  padding: 7px 14px;
+  padding: 8px 15px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-1);
+  color: var(--text);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.25s var(--ease), color 0.25s var(--ease), border-color 0.25s var(--ease);
 }
 .copy-btn:hover { background: rgba(255, 255, 255, 0.12); }
@@ -798,14 +849,32 @@ h2.title {
   border-color: rgba(47, 109, 255, 0.5);
   color: var(--blue-bright);
 }
+.modal-card #gmail-link { margin-top: 22px; }
 .mail-alt {
   display: block;
   text-align: center;
   font-size: 12.5px;
   color: var(--text-3);
-  margin-top: -4px;
+  margin-top: 14px;
 }
 .mail-alt:hover { color: var(--text-2); }
+
+@media (max-width: 560px) {
+  .modal { padding: 0; place-items: end center; }
+  .modal-card {
+    max-width: none;
+    max-height: 92dvh;
+    padding: 30px 20px 26px;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    border-bottom: none;
+    animation: sheetIn 0.34s var(--ease) both;
+  }
+  @keyframes sheetIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: none; }
+  }
+  .copy-value { max-height: 150px; }
+}
 
 /* ---------- Services: accordion ---------- */
 .accordion { display: grid; gap: 14px; }

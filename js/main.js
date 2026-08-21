@@ -190,62 +190,109 @@
       "&body=" + encodeURIComponent(body);
   }
 
-  // The email option shows the address and message ready to copy, since a
-  // mailto: link does nothing on machines with no mail app registered.
-  function fillMailPanel(scope, body) {
-    var pre = scope.querySelector("#mail-body");
+  /* -------- Email modal --------
+     A mailto: link is inert on machines with no mail app registered, so the
+     email option opens a dialog with the address and message ready to copy. */
+  var mailModal = document.querySelector("#mail-modal");
+  var mailToggle = document.querySelector("#mail-toggle");
+  var lastFocused = null;
+
+  function fillMailModal(body) {
+    if (!mailModal) return;
+    var pre = mailModal.querySelector("#mail-body");
     if (pre) pre.textContent = body;
-    var gmail = scope.querySelector("#gmail-link");
+    var gmail = mailModal.querySelector("#gmail-link");
     if (gmail) gmail.setAttribute("href", gmailHref(body));
-    var mailLink = scope.querySelector("#mail-fallback");
+    var mailLink = mailModal.querySelector("#mail-fallback");
     if (mailLink) mailLink.setAttribute("href", mailtoHref(body));
   }
 
-  var mailToggle = document.querySelector("#mail-toggle");
-  var mailPanel = document.querySelector("#mail-panel");
-  if (mailToggle && mailPanel) {
-    mailToggle.addEventListener("click", function () {
-      var open = mailPanel.hasAttribute("hidden");
-      if (open) mailPanel.removeAttribute("hidden");
-      else mailPanel.setAttribute("hidden", "");
-      mailToggle.setAttribute("aria-expanded", String(open));
-      mailToggle.textContent = open ? "Hide email details" : "Send as an email";
+  function openMailModal() {
+    if (!mailModal) return;
+    lastFocused = document.activeElement;
+    mailModal.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
+    var close = mailModal.querySelector(".modal-close");
+    if (close) close.focus();
+  }
+
+  function closeMailModal() {
+    if (!mailModal || mailModal.hasAttribute("hidden")) return;
+    mailModal.setAttribute("hidden", "");
+    document.body.style.overflow = "";
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  if (mailToggle) mailToggle.addEventListener("click", openMailModal);
+
+  if (mailModal) {
+    mailModal.addEventListener("click", function (e) {
+      if (e.target.closest("[data-modal-close]")) closeMailModal();
+    });
+    // Gmail opens in a new tab; drop the dialog behind it.
+    var gmailBtn = mailModal.querySelector("#gmail-link");
+    if (gmailBtn) gmailBtn.addEventListener("click", function () { setTimeout(closeMailModal, 150); });
+    // Keep tabbing inside the dialog while it is open.
+    mailModal.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+      var items = mailModal.querySelectorAll("button, a[href], [tabindex]:not([tabindex='-1'])");
+      if (!items.length) return;
+      var first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
   }
 
-  function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" || e.key === "Esc") closeMailModal();
+  });
+
+  /* -------- Copy to clipboard -------- */
+  function selectNode(node) {
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(node);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return true;
+    } catch (err) { return false; }
+  }
+
+  function copyFrom(node) {
+    var text = node.textContent.trim();
+    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
       return navigator.clipboard.writeText(text);
     }
+    // Fall back to selecting the real node: execCommand may still work, and if
+    // it doesn't the text is highlighted so the visitor can copy it by hand.
     return new Promise(function (resolve, reject) {
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      var ok = false;
-      try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
-      document.body.removeChild(ta);
+      var ok = selectNode(node);
+      try { ok = document.execCommand("copy") && ok; } catch (err) { ok = false; }
       ok ? resolve() : reject();
     });
   }
 
   document.querySelectorAll("[data-copy-target]").forEach(function (btn) {
+    var label = btn.textContent;
+    var timer;
+    function flash(text, cls) {
+      clearTimeout(timer);
+      btn.textContent = text;
+      btn.classList.toggle("copied", cls === "copied");
+      timer = setTimeout(function () {
+        btn.textContent = label;
+        btn.classList.remove("copied");
+      }, 2000);
+    }
     btn.addEventListener("click", function () {
       var target = document.querySelector(btn.getAttribute("data-copy-target"));
       if (!target) return;
-      copyText(target.textContent.trim()).then(function () {
-        btn.textContent = "Copied";
-        btn.classList.add("copied");
-        setTimeout(function () {
-          btn.textContent = "Copy";
-          btn.classList.remove("copied");
-        }, 1800);
+      copyFrom(target).then(function () {
+        flash("Copied", "copied");
       }).catch(function () {
-        btn.textContent = "Press Ctrl+C";
-        setTimeout(function () { btn.textContent = "Copy"; }, 2200);
+        selectNode(target);
+        flash("Selected \u2014 Ctrl+C");
       });
     });
   });
@@ -268,7 +315,7 @@
         if (h && first) h.textContent = "Thanks, " + first + ".";
         var smsLink = success.querySelector("#sms-fallback");
         if (smsLink) smsLink.setAttribute("href", smsHref(body));
-        fillMailPanel(success, body);
+        fillMailModal(body);
         success.classList.add("show");
         success.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
       }
