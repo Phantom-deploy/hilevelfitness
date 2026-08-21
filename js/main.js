@@ -147,6 +147,7 @@
   /* -------- Contact form (hands off to text or email, prefilled) -------- */
   var SMS_NUMBER = "+18582547160";
   var MAIL_TO = "bradyhiel@gmail.com";
+  var MAIL_SUBJECT = "Free consultation request";
 
   function smsHref(body) {
     // iOS wants "&body=", everything else "?body=".
@@ -171,7 +172,7 @@
 
   function mailtoHref(body) {
     return "mailto:" + MAIL_TO +
-      "?subject=" + encodeURIComponent("Free consultation request") +
+      "?subject=" + encodeURIComponent(MAIL_SUBJECT) +
       "&body=" + encodeURIComponent(body);
   }
 
@@ -182,6 +183,72 @@
 
   var mailDirect = document.querySelector("#mail-direct");
   if (mailDirect) mailDirect.setAttribute("href", mailtoHref(INTRO));
+
+  function gmailHref(body) {
+    return "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(MAIL_TO) +
+      "&su=" + encodeURIComponent(MAIL_SUBJECT) +
+      "&body=" + encodeURIComponent(body);
+  }
+
+  // The email option shows the address and message ready to copy, since a
+  // mailto: link does nothing on machines with no mail app registered.
+  function fillMailPanel(scope, body) {
+    var pre = scope.querySelector("#mail-body");
+    if (pre) pre.textContent = body;
+    var gmail = scope.querySelector("#gmail-link");
+    if (gmail) gmail.setAttribute("href", gmailHref(body));
+    var mailLink = scope.querySelector("#mail-fallback");
+    if (mailLink) mailLink.setAttribute("href", mailtoHref(body));
+  }
+
+  var mailToggle = document.querySelector("#mail-toggle");
+  var mailPanel = document.querySelector("#mail-panel");
+  if (mailToggle && mailPanel) {
+    mailToggle.addEventListener("click", function () {
+      var open = mailPanel.hasAttribute("hidden");
+      if (open) mailPanel.removeAttribute("hidden");
+      else mailPanel.setAttribute("hidden", "");
+      mailToggle.setAttribute("aria-expanded", String(open));
+      mailToggle.textContent = open ? "Hide email details" : "Send as an email";
+    });
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+      document.body.removeChild(ta);
+      ok ? resolve() : reject();
+    });
+  }
+
+  document.querySelectorAll("[data-copy-target]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var target = document.querySelector(btn.getAttribute("data-copy-target"));
+      if (!target) return;
+      copyText(target.textContent.trim()).then(function () {
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+        }, 1800);
+      }).catch(function () {
+        btn.textContent = "Press Ctrl+C";
+        setTimeout(function () { btn.textContent = "Copy"; }, 2200);
+      });
+    });
+  });
 
   var form = document.querySelector("#consult-form");
   if (form) {
@@ -201,8 +268,7 @@
         if (h && first) h.textContent = "Thanks, " + first + ".";
         var smsLink = success.querySelector("#sms-fallback");
         if (smsLink) smsLink.setAttribute("href", smsHref(body));
-        var mailLink = success.querySelector("#mail-fallback");
-        if (mailLink) mailLink.setAttribute("href", mailtoHref(body));
+        fillMailPanel(success, body);
         success.classList.add("show");
         success.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
       }

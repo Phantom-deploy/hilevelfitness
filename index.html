@@ -280,8 +280,28 @@
             <p>Your details are ready to go. Choose how you'd like to send them &mdash; we'll reply shortly to lock in your first call.</p>
             <div class="success-actions">
               <a id="sms-fallback" class="btn btn-primary btn-lg btn-block" href="sms:+18582547160">Send as a text</a>
-              <a id="mail-fallback" class="btn btn-ghost btn-lg btn-block" href="mailto:bradyhiel@gmail.com">Send as an email</a>
+              <button type="button" id="mail-toggle" class="btn btn-ghost btn-lg btn-block" aria-expanded="false" aria-controls="mail-panel">Send as an email</button>
             </div>
+
+            <div class="mail-panel" id="mail-panel" hidden>
+              <div class="copy-row">
+                <span class="copy-label">Email</span>
+                <div class="copy-box">
+                  <span class="copy-value" id="mail-address">bradyhiel@gmail.com</span>
+                  <button type="button" class="copy-btn" data-copy-target="#mail-address">Copy</button>
+                </div>
+              </div>
+              <div class="copy-row">
+                <span class="copy-label">Your message</span>
+                <div class="copy-box copy-box-block">
+                  <pre class="copy-value" id="mail-body"></pre>
+                  <button type="button" class="copy-btn" data-copy-target="#mail-body">Copy</button>
+                </div>
+              </div>
+              <a id="gmail-link" class="btn btn-primary btn-block" href="#" target="_blank" rel="noopener">Open in Gmail</a>
+              <a id="mail-fallback" class="mail-alt" href="mailto:bradyhiel@gmail.com">or use your default mail app</a>
+            </div>
+
             <p class="form-note success-note">Text (858) 254-7160 &middot; Email bradyhiel@gmail.com</p>
           </div>
         </div>
